@@ -4,89 +4,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PC Monitor</title>
 <style>
-body { font-family: Arial; text-align: center; margin-top: 50px; background: #111; color: white; }
-button { font-size: 24px; padding: 20px 40px; border-radius: 15px; border: none; margin: 20px; cursor: pointer; }
-#toggleBtn { width: 250px; }
-#status { text-align: center; font-size: 18px; margin-top: 20px; }
+body {
+  font-family: Arial;
+  text-align: center;
+  margin-top: 50px;
+  background: #111;
+  color: white;
+}
+button {
+  font-size: 22px;
+  padding: 20px 35px;
+  border-radius: 15px;
+  border: none;
+  margin: 15px;
+  cursor: pointer;
+  width: 260px;
+}
+#status {
+  font-size: 18px;
+  margin-top: 15px;
+}
 </style>
 </head>
 <body>
+
 <h1>PC Monitor</h1>
-<button id="toggleBtn" onclick="toggle()" disabled>Loading...</button>
+
+<button id="toggleBtn" disabled>Loading...</button>
+<br>
+<button onclick="openEdit()">Edit Toggle</button>
+
 <div id="status"></div>
 
 <script>
-const gistId = "fb9897314c8208d3e54c83a4c5d99a11";           // replace with your Gist ID
-const githubToken = "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"; // replace with your GitHub personal access token
+const rawUrl =
+"https://gist.githubusercontent.com/masterbonger/45333d75201c3e985d109e345878f94b/raw/468d3152d566529f1dd11920b6c6fcbe0bbe03f5/pc_monitor.txt";
 
-let currentState = "OFF";
-let isSaving = false;
+const editUrl =
+"https://gist.github.com/masterbonger/45333d75201c3e985d109e345878f94b";
 
-async function fetchState(){
-    try {
-        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-            headers: { "Authorization": "token " + githubToken }
-        });
-        const data = await res.json();
-        currentState = data.files["pc_monitor.txt"].content.trim();
-        updateButton();
-        document.getElementById("toggleBtn").disabled = false;
-    } catch(e){
-        document.getElementById("status").innerText = "❌ Error fetching state";
-        console.error("Error fetching state:", e);
-    }
-}
+async function fetchState() {
+  try {
+    const res = await fetch(rawUrl + "?t=" + Date.now());
+    const text = await res.text();
+    const state = text.trim();
 
-function updateButton(){
     const btn = document.getElementById("toggleBtn");
     const status = document.getElementById("status");
-    if(currentState === "ON"){
-        btn.innerText = "Monitoring: ON";
-        btn.style.background = "green";
-        status.innerText = "✅ PC monitoring is ACTIVE";
+
+    if (state === "ON") {
+      btn.innerText = "Monitoring: ON";
+      btn.style.background = "green";
+      status.innerText = "✅ Monitoring is ACTIVE";
     } else {
-        btn.innerText = "Monitoring: OFF";
-        btn.style.background = "red";
-        status.innerText = "ℹ PC monitoring is PAUSED";
+      btn.innerText = "Monitoring: OFF";
+      btn.style.background = "red";
+      status.innerText = "⏸ Monitoring is PAUSED";
     }
+
+    btn.disabled = false;
+  } catch {
+    document.getElementById("status").innerText = "❌ Failed to fetch state";
+  }
 }
 
-async function toggle(){
-    if(isSaving) return; // prevent double-click
-    isSaving = true;
-
-    const newState = currentState === "ON" ? "OFF" : "ON";
-
-    try {
-        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-            method: "PATCH",
-            headers: {
-                "Authorization": "token " + githubToken,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                files: { "pc_monitor.txt": { content: newState } }
-            })
-        });
-
-        if(res.ok){
-            currentState = newState;
-            updateButton();
-        } else {
-            alert("❌ Error updating state");
-            console.error(await res.text());
-        }
-
-    } catch(e){
-        alert("❌ Error updating state");
-        console.error("Error updating state:", e);
-    } finally {
-        isSaving = false;
-    }
+function openEdit() {
+  window.open(editUrl, "_blank");
 }
 
-// Initial fetch (no interval needed — persistent state)
 fetchState();
+setInterval(fetchState, 5000);
 </script>
+
 </body>
 </html>
