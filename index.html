@@ -38,16 +38,18 @@ button {
 
 <script>
 const rawUrl =
-"https://gist.githubusercontent.com/masterbonger/45333d75201c3e985d109e345878f94b/raw/468d3152d566529f1dd11920b6c6fcbe0bbe03f5/pc_monitor.txt";
+"https://gist.githubusercontent.com/masterbonger/45333d75201c3e985d109e345878f94b/raw/pc_monitor.txt";
 
 const editUrl =
 "https://gist.github.com/masterbonger/45333d75201c3e985d109e345878f94b";
 
 async function fetchState() {
   try {
-    const res = await fetch(rawUrl + "?t=" + Date.now());
+    const res = await fetch(rawUrl + "?nocache=" + Date.now());
     const text = await res.text();
     const state = text.trim();
+
+    console.log("Fetched state:", state);
 
     const btn = document.getElementById("toggleBtn");
     const status = document.getElementById("status");
@@ -63,7 +65,8 @@ async function fetchState() {
     }
 
     btn.disabled = false;
-  } catch {
+  } catch (e) {
+    console.error("Fetch failed:", e);
     document.getElementById("status").innerText = "❌ Failed to fetch state";
   }
 }
