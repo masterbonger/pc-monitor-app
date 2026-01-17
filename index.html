@@ -4,68 +4,89 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PC Monitor</title>
 <style>
-body{font-family:Arial;text-align:center;margin-top:50px;background:#111;color:white;}
-button{font-size:24px;padding:20px 40px;border-radius:15px;border:none;margin:20px;}
-#toggleBtn{width:250px;}
-#status{text-align:center;font-size:18px;margin-top:20px;}
+body { font-family: Arial; text-align: center; margin-top: 50px; background: #111; color: white; }
+button { font-size: 24px; padding: 20px 40px; border-radius: 15px; border: none; margin: 20px; cursor: pointer; }
+#toggleBtn { width: 250px; }
+#status { text-align: center; font-size: 18px; margin-top: 20px; }
 </style>
 </head>
 <body>
 <h1>PC Monitor</h1>
-<button id="toggleBtn" onclick="toggle()">Loading...</button>
+<button id="toggleBtn" onclick="toggle()" disabled>Loading...</button>
 <div id="status"></div>
 
 <script>
-const gistId = "pc_monitor.txt";           // replace with Gist ID
-const githubToken = "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"; // replace with GitHub token
-const rawUrl = "https://gist.githubusercontent.com/masterbonger/fb9897314c8208d3e54c83a4c5d99a11/raw/f0eb842c028229adeb634456d51a606d83fd8a8d/pc_monitor.txt";      // replace with Raw Gist URL
+const gistId = "YOUR_GIST_ID_HERE";           // replace with your Gist ID
+const githubToken = "YOUR_GITHUB_TOKEN_HERE"; // replace with your GitHub personal access token
 
 let currentState = "OFF";
+let isSaving = false;
 
 async function fetchState(){
-    try{
-        const res = await fetch(rawUrl);
-        const text = await res.text();
-        currentState = text.trim();
+    try {
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+            headers: { "Authorization": "token " + githubToken }
+        });
+        const data = await res.json();
+        currentState = data.files["pc_monitor.txt"].content.trim();
         updateButton();
+        document.getElementById("toggleBtn").disabled = false;
     } catch(e){
-        document.getElementById("status").innerText = "Error fetching state";
+        document.getElementById("status").innerText = "❌ Error fetching state";
+        console.error("Error fetching state:", e);
     }
 }
 
 function updateButton(){
     const btn = document.getElementById("toggleBtn");
     const status = document.getElementById("status");
-    if(currentState==="ON"){
-        btn.innerText="Monitoring: ON";
-        btn.style.background="green";
-        status.innerText="PC monitoring is ACTIVE";
-    }else{
-        btn.innerText="Monitoring: OFF";
-        btn.style.background="red";
-        status.innerText="PC monitoring is PAUSED";
+    if(currentState === "ON"){
+        btn.innerText = "Monitoring: ON";
+        btn.style.background = "green";
+        status.innerText = "✅ PC monitoring is ACTIVE";
+    } else {
+        btn.innerText = "Monitoring: OFF";
+        btn.style.background = "red";
+        status.innerText = "ℹ PC monitoring is PAUSED";
     }
 }
 
 async function toggle(){
-    const newState = currentState==="ON"?"OFF":"ON";
-    try{
-        await fetch(`https://api.github.com/gists/${gistId}`,{
-            method:"PATCH",
-            headers:{"Authorization":"token "+githubToken,"Content-Type":"application/json"},
-            body:JSON.stringify({files:{"pc_monitor.txt":{content:newState}}})
+    if(isSaving) return; // prevent double-click
+    isSaving = true;
+
+    const newState = currentState === "ON" ? "OFF" : "ON";
+
+    try {
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+            method: "PATCH",
+            headers: {
+                "Authorization": "token " + githubToken,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                files: { "pc_monitor.txt": { content: newState } }
+            })
         });
-        currentState=newState;
-        updateButton();
-        alert("Monitoring set to "+newState);
-    }catch(e){
-        alert("Error updating state");
+
+        if(res.ok){
+            currentState = newState;
+            updateButton();
+        } else {
+            alert("❌ Error updating state");
+            console.error(await res.text());
+        }
+
+    } catch(e){
+        alert("❌ Error updating state");
+        console.error("Error updating state:", e);
+    } finally {
+        isSaving = false;
     }
 }
 
-// Initial fetch + auto-refresh every 5 seconds
+// Initial fetch (no interval needed — persistent state)
 fetchState();
-setInterval(fetchState,5000);
 </script>
 </body>
 </html>
