@@ -3,6 +3,7 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PC Monitor</title>
+
 <style>
 body {
   font-family: Arial;
@@ -17,7 +18,6 @@ button {
   border-radius: 15px;
   border: none;
   margin: 15px;
-  cursor: pointer;
   width: 260px;
 }
 #status {
@@ -26,6 +26,7 @@ button {
 }
 </style>
 </head>
+
 <body>
 
 <h1>PC Monitor</h1>
@@ -37,19 +38,16 @@ button {
 <div id="status"></div>
 
 <script>
-const rawUrl =
+const RAW_URL =
 "https://gist.githubusercontent.com/masterbonger/45333d75201c3e985d109e345878f94b/raw/pc_monitor.txt";
 
-const editUrl =
+const EDIT_URL =
 "https://gist.github.com/masterbonger/45333d75201c3e985d109e345878f94b";
 
 async function fetchState() {
   try {
-    const res = await fetch(rawUrl + "?nocache=" + Date.now());
-    const text = await res.text();
-    const state = text.trim();
-
-    console.log("Fetched state:", state);
+    const res = await fetch(RAW_URL + "?t=" + Date.now());
+    const state = (await res.text()).trim();
 
     const btn = document.getElementById("toggleBtn");
     const status = document.getElementById("status");
@@ -65,14 +63,14 @@ async function fetchState() {
     }
 
     btn.disabled = false;
-  } catch (e) {
-    console.error("Fetch failed:", e);
-    document.getElementById("status").innerText = "❌ Failed to fetch state";
+  } catch {
+    document.getElementById("status").innerText =
+      "❌ Failed to fetch state";
   }
 }
 
 function openEdit() {
-  window.open(editUrl, "_blank");
+  window.open(EDIT_URL, "_blank");
 }
 
 fetchState();
